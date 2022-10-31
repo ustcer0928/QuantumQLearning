@@ -13,13 +13,15 @@ class side_walk_env:
         self.info = {}
         self.p_obstacle = p_obstacle
         self.p_litter = p_litter
-        self.roadmap = self.generate_roadmap(nx,ny)
+        self.nx = nx
+        self.ny = ny
+        self.roadmap = self.generate_roadmap()
         self.upper_border = upper_border
         self.lower_border = lower_border
         self.current_position = np.array([0,0])
 
-    def generate_roadmap(self,nx,ny):
-        roadmap = np.random.choice([0,1,2], (nx, ny),p=[1-self.p_obstacle-self.p_litter,self.p_obstacle,self.p_litter])
+    def generate_roadmap(self):
+        roadmap = np.random.choice([0,1,2], (self.nx, self.ny),p=[1-self.p_obstacle-self.p_litter,self.p_obstacle,self.p_litter])
         return roadmap
 
     def reset(self):
@@ -51,8 +53,8 @@ class side_walk_env:
         road = [[i+1 for i in range(self.ny)] for j in range(self.nx)]
         road_up = [[self.upper_border] for i in range(self.nx)]
         road_low = [[self.lower_border] for i in range(self.nx)]
-        obstacle = np.array[np.where(self.roadmap == 1)[0]+1, np.where(self.roadmap == 1)[1]+1]
-        litter = np.array[np.where(self.roadmap == 2)[0]+1, np.where(self.roadmap == 2)[1]+1]
+        obstacle = np.array([np.where(self.roadmap == 1)[0]+1, np.where(self.roadmap == 1)[1]+1])
+        litter = np.array([np.where(self.roadmap == 2)[0]+1, np.where(self.roadmap == 2)[1]+1])
         plt.figure(figsize=(15,4))
         plt.plot(x, road, linestyle='--', color = "0.7", zorder=10)
         plt.fill_between(reduce(operator.add, x), reduce(operator.add, road_low), reduce(operator.add, road_up), color = '#539caf', alpha = 0.2, zorder=20)
