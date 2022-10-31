@@ -19,7 +19,7 @@ class side_walk_env:
         self.current_position = np.array([0,0])
 
     def generate_roadmap(self,nx,ny):
-        roadmap = np.random.randint([0,1,2], (nx, ny),p=[1-self.p_obstacle-self.p_litter,self.p_obstacle,self.p_litter])
+        roadmap = np.random.choice([0,1,2], (nx, ny),p=[1-self.p_obstacle-self.p_litter,self.p_obstacle,self.p_litter])
         return roadmap
 
     def reset(self):
