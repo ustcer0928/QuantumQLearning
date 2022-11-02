@@ -37,7 +37,7 @@ class GroverQLearner:
     '''
     def __init__(self, env) -> None:
         self.env = env
-        self.state = env.reset()
+        self.state = env.reset()[0]
         self.action = 0
         self.state_dimension = env.observation_space.n
         self.action_dimension = env.action_space.n
@@ -71,7 +71,8 @@ class GroverQLearner:
         '''
         Initialize the quanutm circuits encoding the action wavefunction of every state. Every initial action wavefunction is a equally weighted superposition of all action eignenfucntions. 
         '''
-        action_circuits = np.zeros(self.state_dimension)
+        # action_circuits = np.zeros(self.state_dimension)
+        action_circuits = np.empty(self.state_dimension, dtype=object)
         for s in range(self.state_dimension):
             action_circuits[s] = QuantumCircuit(self.action_qregister_size, name='action_s{}'.format(s)) # construct the quanutm circuit
         for circuit in action_circuits:
@@ -83,7 +84,8 @@ class GroverQLearner:
         Initialize the grover operators of every action. U_grover := U_a0 * Ua where a0 is the equally superposition of all action eigenfunctions and a is an action eigenfunction. In fact,
         U_grover is not updated during the training process within the scope of this project.
         '''
-        grove_operators = np.zeros(self.action_dimension)
+        # grove_operators = np.zeros(self.action_dimension)
+        grove_operators = np.empty(self.action_dimension, dtype=object)
         target_states = np.zeros(self.action_dimension)
         for i in range(self.action_dimension):
             state_binary = format(i, '0{}b'.format(self.action_qregister_size)) # generate the statevector binary string for encoding every action using the quantum register
@@ -114,12 +116,12 @@ class GroverQLearner:
         '''
         Run grover iterations at one state
         '''
-        length = min(self.grover_length(self.state, self.action), self.max_grover_length) # number of grover operators(iterations) to append in this steps
-        circuit = self.action_circuits(self.state) # the up-to-date quanutm circuit encodeing the action of current state
-        grover_operator = self.grover_operators(self.action) # the grover operator of current action
-        max_grover_length_reached = self.max_grover_length_reached(self.state)
+        length = min(self.grover_lengths[self.state, self.action], self.max_grover_length) # number of grover operators(iterations) to append in this steps
+        circuit = self.action_circuits[self.state] # the up-to-date quanutm circuit encodeing the action of current state
+        grover_operator = self.grover_operators[self.action] # the grover operator of current action
+        max_grover_length_reached = self.max_grover_length_reached[self.state]
         if not(max_grover_length_reached.any()):
-            for _ in length:
+            for _ in range(length):
                 circuit.append(grover_operator, list(range(self.action_qregister_size)))
         if length == self.max_grover_length and (not(max_grover_length_reached.any())): 
             self.max_grover_length_reached[self.state, self.action] = True  # update the self.max_grover_length_reached when the max grove length is reached
@@ -131,7 +133,7 @@ class GroverQLearner:
         '''
         alpha = self.hyperparameters['alpha']
         gamma = self.hyperparameters['gamma']
-        self.Q_value[self.state, self.action] = self.Q_values[self.state, self.action] + alpha * (reward + gamma * np.max(self.Q_value[new_state]) - self.Q_values[self.state, self.action])
+        self.Q_values[self.state, self.action] = self.Q_values[self.state, self.action] + alpha * (reward + gamma * np.max(self.Q_values[new_state]) - self.Q_values[self.state, self.action])
 
     def train(self):
         ''' 
@@ -150,7 +152,7 @@ class GroverQLearner:
         for epoch in range(max_epochs):
             if epoch % 10 == 0:
                 print("Processing epoch {} ...".format(epoch)) # monitor the training process
-            self.state = self.env.reset() # reset env
+            self.state = self.env.reset()[0] # reset env
             target_reached = False # init target reached flag
             trajectory = [self.state] # list to record the trajectory of the current epoch
             
@@ -175,8 +177,8 @@ class GroverQLearner:
                     break
                 self.state = new_state # update the state if it is changed
 
-            steps_in_all_epochs.append[optimal_steps]
-            target_reached_in_all_epochs.append[target_reached]
-            trajectories_in_all_epochs.append[trajectory]
+            steps_in_all_epochs.append(optimal_steps)
+            target_reached_in_all_epochs.append(target_reached)
+            trajectories_in_all_epochs.append(trajectory)
 
         return steps_in_all_epochs, target_reached_in_all_epochs, trajectories_in_all_epochs
