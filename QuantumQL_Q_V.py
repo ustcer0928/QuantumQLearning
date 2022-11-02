@@ -9,8 +9,10 @@ from math import ceil
 class GroverQLearner:
     ''' 
     Implement a quanutm reinforcement learning agent based on Grover amplitute enhancement and QLearing algorithm.
+
     Assumption:
     The dimensions of the state space and action space are both finite
+
     Parameters:
     env: the environment to solve; default is OpenAI gym "FrozenLake"
     state (int): current state
@@ -41,6 +43,7 @@ class GroverQLearner:
         self.action_dimension = env.action_space.n
         self.action_qregister_size = ceil(np.log2(self.action_dimension))
         self.max_grover_length = int(round(np.pi / (4 * np.arcsin(1. / np.sqrt(2 ** self.action_qregister_size))) - 0.5))
+        self.state_values = np.zeros(self.state_dimension, dtype=float)
         self.Q_values = np.zeros((self.state_dimension, self.action_dimension), dtype=float) 
         self.grover_lengths = np.zeros((self.state_dimension, self.action_dimension), dtype=int)
         self.max_grover_length_reached = np.zeros((self.state_dimension, self.action_dimension), dtype=bool)
@@ -101,6 +104,7 @@ class GroverQLearner:
         result = job.result()
         counts = result.get_counts()
         action = int((list(counts.keys()))[0], 2) # take the action with highest probablity
+        self.state_values[self.state] = self.Q_values[self.state, action] # update the state value
         return action
 
     def _get_grover_length(self, reward, new_state):
@@ -108,7 +112,8 @@ class GroverQLearner:
         Calculate length of the Grover iteration after taking an action
         '''
         k = self.hyperparameters['k']
-        return int(k * (reward + np.max(self.Q_values[new_state]))) # here we use max(Q_value[new_state]), it is also possible to use the expectation of Q_value[new_state] based on Born's rule 
+        # return int(k * (reward + np.max(self.Q_values[new_state]))) # here we use max(Q_value[new_state]), it is also possible to use the expectation of Q_value[new_state] based on Born's rule 
+        return int(k * (reward + self.state_values[new_state]))
         
     def _run_grover_iterations(self):
         '''
@@ -131,7 +136,8 @@ class GroverQLearner:
         '''
         alpha = self.hyperparameters['alpha']
         gamma = self.hyperparameters['gamma']
-        self.Q_values[self.state, self.action] = self.Q_values[self.state, self.action] + alpha * (reward + gamma * np.max(self.Q_values[new_state]) - self.Q_values[self.state, self.action])
+        # self.Q_values[self.state, self.action] = self.Q_values[self.state, self.action] + alpha * (reward + gamma * np.max(self.Q_values[new_state]) - self.Q_values[self.state, self.action])
+        self.Q_values[self.state, self.action] = self.Q_values[self.state, self.action] + alpha * (reward + gamma * self.state_values[new_state] - self.Q_values[self.state, self.action])
 
     def train(self):
         ''' 
