@@ -65,7 +65,7 @@ class GroverQLearner:
         :param hyperdict: a dict with same keys as self's
         :return:
         """
-        self.hyperparams = hyperdict
+        self.hyperparameters = hyperdict
 
     def _init_action_circuits(self):
         '''
@@ -123,7 +123,7 @@ class GroverQLearner:
         if not(max_grover_length_reached.any()):
             for _ in range(length):
                 circuit.append(grover_operator, list(range(self.action_qregister_size)))
-        if length == self.max_grover_length and (not(max_grover_length_reached.any())): 
+        if length >= self.max_grover_length and (not(max_grover_length_reached.any())): 
             self.max_grover_length_reached[self.state, self.action] = True  # update the self.max_grover_length_reached when the max grove length is reached
         self.action_circuits[self.state] = circuit # update the circuit
 
