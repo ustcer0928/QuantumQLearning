@@ -10,7 +10,7 @@ class side_walk_env:
         self.action_space = np.array([0, 1, 2, 3])
         self.reward = 0
         self.done = False
-        self.info = {}
+        self.info = {} # for debugging
         self.p_obstacle = p_obstacle
         self.p_litter = p_litter
         self.nx = nx
@@ -28,14 +28,14 @@ class side_walk_env:
         self.state = 0
         self.reward = 0
         self.done = False
-        self.info = {}
+        self.info = {} 
         return self.state
 
     def position_to_state(self,current_position,ob_bo):
-        right = [current_position[0], current_position[1] + 1]
-        left = [current_position[0], current_position[1] - 1]
-        down = [current_position[0] - 1, current_position[1]]
-        up = [current_position[0] + 1, current_position[1]]
+        right = current_position + np.array([0,1])
+        left = current_position + np.array([0,-1])
+        down = current_position + np.array([-1,0])
+        up = current_position + np.array([1,0])
         state = 2**0 * (self.roadmap[up[0], up[1]]==ob_bo) + 2**1 * (self.roadmap[down[0], down[1]]==ob_bo) + 2**2 * (self.roadmap[left[0], left[1]]==ob_bo) + 2**3 * (self.roadmap[right[0], right[1]]==ob_bo)
         return state
 
@@ -71,12 +71,16 @@ class side_walk_env_with_obstacle(side_walk_env):
 
     def step(self, action):
         current_position = self.current_position
+        if current_position[0] == self.nx-1:
+            self.done = True
+            self.reward = 100
+            return self.state, self.reward, self.done, self.info
         if action == 0: # move left
             next_position = [current_position[0], current_position[1] - 1]
             self.state = self.position_to_state(next_position,1)
             self.current_position = next_position
             if self.roadmap[next_position[0], next_position[1]] == 1:
-                self.reward = -100
+                self.reward = -50
             elif self.roadmap[next_position[0], next_position[1]] == 0:
                 self.reward = -2
         elif action == 1: # move right
@@ -84,7 +88,7 @@ class side_walk_env_with_obstacle(side_walk_env):
             self.state = self.position_to_state(next_position,1)
             self.current_position = next_position
             if self.roadmap[next_position[0], next_position[1]] == 1:
-                self.reward = -100
+                self.reward = -50
             elif self.roadmap[next_position[0], next_position[1]] == 0:
                 self.reward = 2
         elif action == 2: # move up
@@ -92,7 +96,7 @@ class side_walk_env_with_obstacle(side_walk_env):
             self.state = self.position_to_state(next_position,1)
             self.current_position = next_position
             if self.roadmap[next_position[0], next_position[1]] == 1:
-                self.reward = -100
+                self.reward = -50
             elif self.roadmap[next_position[0], next_position[1]] == 0:
                 self.reward = 0
         elif action == 3: # move down
@@ -106,17 +110,23 @@ class side_walk_env_with_obstacle(side_walk_env):
         else:
             raise ValueError('Invalid action')
 
+        return self.state, self.reward, self.done, self.info
+
     def render(self):
         print('state: ', self.state)
         # print('roadmap: ', self.roadmap)
 
-class side_walk_env_with_bonus(side_walk_env):
+class side_walk_env_with_litter(side_walk_env):
     def __init__(self,nx,ny,upper_border,lower_border,p_litter,p_obstacle=0):
         super().__init__(nx,ny,upper_border,lower_border,p_obstacle,p_litter)
         self.observation_space = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
 
     def step(self, action):
         current_position = self.current_position
+        if current_position[0] == self.nx-1:
+            self.done = True
+            self.reward = 100
+            return self.state, self.reward, self.done, self.info
         if action == 0: # move left
             next_position = [current_position[0], current_position[1] - 1]
             self.state = self.position_to_state(next_position,2)
@@ -151,6 +161,8 @@ class side_walk_env_with_bonus(side_walk_env):
                 self.reward = 0
         else:
             raise ValueError('Invalid action')
+
+        return self.state, self.reward, self.done, self.info
 
     def render(self):
         print('state: ', self.state)
@@ -182,6 +194,10 @@ class side_walk_env_stay_on_road(side_walk_env):
 
     def step(self, action):
         current_position = self.current_position
+        if current_position[0] == self.nx-1:
+            self.done = True
+            self.reward = 100
+            return self.state, self.reward, self.done, self.info
         current_state = self.state
         if action == 0: # move left
             next_position = [current_position[0], current_position[1] - 1]
@@ -229,3 +245,5 @@ class side_walk_env_stay_on_road(side_walk_env):
                 self.reward = -20
         else:
             raise ValueError('Invalid action')
+
+        return self.state, self.reward, self.done, self.info
