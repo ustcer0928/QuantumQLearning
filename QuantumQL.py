@@ -59,8 +59,13 @@ class GroverQLearner:
         self.backend = Aer.get_backend('qasm_simulator')
             
     # hyperparameter setter
-    def set_hyperparameters(self, params):
-        pass
+    def set_hyperparams(self, hyperdict):
+        """
+        Set learner's hyperparameters
+        :param hyperdict: a dict with same keys as self's
+        :return:
+        """
+        self.hyperparams = hyperdict
 
     def _init_action_circuits(self):
         '''
