@@ -21,9 +21,8 @@ class RL_Qlearning_trainer():
     Q_values (2D np array): Q values of all (state, action) combinations; shape = (state_dimension, action_dimention)
     hyperparameters (dict): hyperparameters of learning; 
                             {
-                                'k': prefactor of max grover length, 
                                 'alpha': learning rate, 'gamma': discount, 
-                                'epsilonr': tolerance of the Q values,
+                                'eps': tolerance of the Q values,
                                 'max_epochs': max number of epochs for training,
                                 'max_steps': max number of steps in every epoch
                             }
@@ -37,7 +36,6 @@ class RL_Qlearning_trainer():
         self.Q_values = np.zeros((self.state_dimension, self.action_dimension), dtype=float) 
         self.state_values = np.zeros(self.state_dimension, dtype=float)
         self.hyperparameters = {
-            'k': 0.1,
             'alpha': 0.05,
             'gamma': 0.99,
             'eps': 0.01,
@@ -89,6 +87,7 @@ class RL_Qlearning_trainer():
         '''
         # eps = self.hyperparameters['eps'] # the Q_value table tolerance
         max_epochs = self.hyperparameters['max_epochs']
+        print(max_epochs)
         optimal_steps = self.hyperparameters['max_steps'] # initial the steps to be the max steps
         target_reached = False
         trajectory = []
@@ -154,6 +153,7 @@ class GroverQlearner(RL_Qlearning_trainer):
         self.grover_operators = self._init_grover_operators()
         self.action_circuits = self._init_action_circuits()
         self.backend = Aer.get_backend('qasm_simulator')
+        self.hyperparameters['k'] = 0.1 # prefactor of max grover length
 
 
     def _init_action_circuits(self):
@@ -251,7 +251,6 @@ class ClassicalLearner(RL_Qlearning_trainer):
         alpha = self.hyperparameters['alpha']
         gamma = self.hyperparameters['gamma']
         self.Q_values[self.state, self.action] = self.Q_values[self.state, self.action] + alpha * (reward + gamma * np.max(self.Q_values[new_state]) - self.Q_values[self.state, self.action])
-        print('1')
 
     def _update_learner(self,*args):
         pass
